@@ -10,13 +10,13 @@ from SomeDL.utils.config import config
 from SomeDL.utils.utils import sanitize, generateOutputName
 
 
-def downloadSong(videoID: str, artist: str, album_artist: str, song: str, album, date, track_pos, track_count, label = None):
+def downloadSong(videoID: str, artist: str, album_artist: str, song: str, album, date, track_pos, track_count, label = None, output_subdir = None):
     # https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#embedding-yt-dlp. 
     #URLS = ['https://music.youtube.com/watch?v=hComisqDS1I']
     URLS = f'https://music.youtube.com/watch?v={videoID}'
     # URLS = f'https://www.youtube.com/watch?v=-X8Olge799M'
     # output_template = sanitize(f'{artist} - {song}')
-    output_template = generateOutputName(artist, album_artist, song, album, date, track_pos, track_count)
+    output_template = generateOutputName(artist, album_artist, song, album, date, track_pos, track_count, output_subdir = output_subdir)
     console.debug(f'Output path: {str(output_template)}', label)
 
     console.info("Start yt-dlp download", label)

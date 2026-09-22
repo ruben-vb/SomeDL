@@ -10,9 +10,32 @@ def sanitize(filename):
         filename = re.sub(r'[<>:"/\\|?*\x00-\x1F]', '_', filename)
         return filename
 
-def generateOutputName(artist = False, album_artist = False, song = False, album = False, date = False, track_pos = False, track_count = False):
+
+def sanitize_folder_name(name):
+    # --- Folder names need stricter sanitization than filenames: emojis/symbols are removed entirely,
+    # --- Windows-illegal characters are stripped, trailing dots/spaces removed and reserved device names escaped
+    if not name:
+        return ""
+
+    name = re.sub(r"[^\w\s\-()&'!,.]", "", name)
+    name = re.sub(r"\s+", " ", name).strip().strip(".")
+    name = name[:100].strip().strip(".")
+
+    if not name:
+        return ""
+
+    if re.fullmatch(r"(?i)(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])", name):
+        name = "_" + name
+
+    return name
+
+def generateOutputName(artist = False, album_artist = False, song = False, album = False, date = False, track_pos = False, track_count = False, output_subdir = False):
     track_pos = str(track_pos).zfill(2)
     base = Path(config["download"]["output_dir"])
+
+    if output_subdir:
+        base = base / output_subdir
+
     template = config["download"]["output"]
     filled_template = template.format(
         artist=sanitize(artist),
@@ -47,7 +70,7 @@ def read_archive_file():
         config["download"]["download_archive_data"] = f.read().splitlines()
 
 
-def checkIfFileExists(artist, song, song_id, album_artist = None):
+def checkIfFileExists(artist, song, song_id, album_artist = None, output_subdir = None):
     # TODO: implement a skip if --redownload is set
 
     if config["download"]["download_archive"]:
@@ -58,6 +81,10 @@ def checkIfFileExists(artist, song, song_id, album_artist = None):
         return False
 
     base = Path(config["download"]["output_dir"])
+
+    if output_subdir:
+        base = base / output_subdir
+
     template = config["download"]["output"] + ".*"
     
     filename = re.sub(r"\{(year|album|track_pos|track_count)\}", "*", template)

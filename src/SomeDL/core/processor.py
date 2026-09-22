@@ -42,9 +42,6 @@ def process_song_list_concurrent(song_list_queue: queue.Queue, oneshot: bool = T
         metadata_list = []
         
         index = 0
-        length = song_list_queue.qsize()
-        if oneshot:
-            length -= 1
 
         while True:
             console.pause_event.wait() # --- To pause from the web ui
@@ -56,6 +53,11 @@ def process_song_list_concurrent(song_list_queue: queue.Queue, oneshot: bool = T
                 break
             
             index += 1
+
+            # --- Recompute the total each iteration so items added while running (e.g. from the WebUI) are counted
+            length = index + song_list_queue.qsize()
+            if oneshot:
+                length -= 1 # --- _DONE sentinel is still in the queue
 
             if item.get("text_query"):
                 label = {
@@ -192,9 +194,9 @@ def process_song_list_concurrent(song_list_queue: queue.Queue, oneshot: bool = T
                 # === Download audio ===
                 if config["download"]["strict_url_download"] and metadata.get("original_url_id"):
                     console.info(f'INFO: Downloading audio from original URL as download_url_audio is set: {metadata["original_url_id"]}', label)
-                    filename = downloadSong(metadata["original_url_id"], metadata["artist_name"], metadata["album_artist"], metadata["song_title"], metadata["album_name"], metadata["date"], metadata["track_pos"], metadata["track_count"], label)
+                    filename = downloadSong(metadata["original_url_id"], metadata["artist_name"], metadata["album_artist"], metadata["song_title"], metadata["album_name"], metadata["date"], metadata["track_pos"], metadata["track_count"], label, output_subdir = metadata.get("output_subdir"))
                 else: 
-                    filename = downloadSong(metadata["song_id"], metadata["artist_name"], metadata["album_artist"], metadata["song_title"], metadata["album_name"], metadata["date"], metadata["track_pos"], metadata["track_count"], label)
+                    filename = downloadSong(metadata["song_id"], metadata["artist_name"], metadata["album_artist"], metadata["song_title"], metadata["album_name"], metadata["date"], metadata["track_pos"], metadata["track_count"], label, output_subdir = metadata.get("output_subdir"))
             
 
                 # === Add Metadata ===

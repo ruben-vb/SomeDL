@@ -25,7 +25,7 @@ def fetch_metadata(metadata, known_metadata: list = []):
     start = time.time()
     console.info(f'Start fetching metadata', metadata.get("label"))
 
-    if (result := checkIfFileExists(metadata["artist_name"], metadata["song_title"], metadata["song_id"])):
+    if (result := checkIfFileExists(metadata["artist_name"], metadata["song_title"], metadata["song_id"], output_subdir = metadata.get("output_subdir"))):
         console.info(f'[green]Song does already exist. Skipping download.[/]', metadata.get("label"))
         return {"already_downloaded": True, "path": result}
 
@@ -55,7 +55,7 @@ def fetch_metadata(metadata, known_metadata: list = []):
     # timerend("guess_album")
 
     # === Second check if exists ===
-    if (result := checkIfFileExists(metadata["artist_name"], metadata["song_title"], metadata["song_id"], metadata["album_artist"])):
+    if (result := checkIfFileExists(metadata["artist_name"], metadata["song_title"], metadata["song_id"], metadata["album_artist"], output_subdir = metadata.get("output_subdir"))):
         # --- Second check, neccessary if only album_artist is set
         console.info(f'[green]Song does already exist. Skipping download. (2)[/]', metadata.get("label"))
         return {"already_downloaded": True, "path": result}

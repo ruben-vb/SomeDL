@@ -13,6 +13,7 @@ import platform
 from pathlib import Path
 
 from flask import Flask, render_template, request, jsonify, Response
+from spotify_scraper import SpotifyClient
 # from flask_cors import CORS
 from waitress import serve
 
@@ -21,6 +22,7 @@ from SomeDL.core.input_parser import generateSongList
 from SomeDL.api.setlistfm import setlistfm_get_artist, setlistfm_get_setlist
 import SomeDL.utils.console as console
 from SomeDL.utils.config import config, change_configs, deep_update_config, generate_config, webui_config_load, webui_config_save
+from SomeDL.utils.utils import sanitize_folder_name
 from SomeDL.api.ytmusic import yt
 from SomeDL.utils.version import VERSION
 from SomeDL.core.download_report import build_download_report
@@ -421,6 +423,101 @@ def yt_get_artist():
 
     return jsonify({"result": artist_result}), 200
 
+
+# === Spotify ===
+@app.route("/spotify-search", methods=["POST"])
+def spotify_search():
+    data = request.json
+    playlist_url: str = data.get("playlist_url")
+
+    console.webui(f'Spotify search: "{playlist_url}"')
+
+    if not playlist_url:
+        return jsonify({"error": "No playlist_url"}), 400
+
+    tracks: list[str] = []
+
+    with SpotifyClient() as client:
+        playlist = client.get_playlist(playlist_url)
+
+        for playlistTrack in playlist.tracks:
+            track = playlistTrack.track
+
+            query = f"{track.artists[0].name} - {track.name}"
+
+            tracks.append(query)
+
+
+    # --- Placeholder, actual implementation pending
+    return jsonify({
+        "title": playlist.name,
+        "tracks": tracks,
+    }), 200
+
+
+spotify_dl_progress = {"current": 0, "total": 0, "running": False}
+spotify_progress_lock = threading.Lock()
+
+
+@app.route("/spotify-download-playlist", methods=["POST"])
+def spotify_download_playlist():
+    data = request.json
+    titles = data.get("titles")
+    playlist_title = data.get("playlist_title")
+
+    if not titles:
+        return jsonify({"error": "No titles"}), 400
+
+    output_subdir = sanitize_folder_name(playlist_title) or "Spotify Playlist"
+
+    console.webui(f'Spotify playlist download: {len(titles)} titles into "{output_subdir}"')
+
+    with spotify_progress_lock:
+        if spotify_dl_progress["running"]:
+            return jsonify({"error": "A playlist download is already running"}), 409
+        spotify_dl_progress.update(current=0, total=len(titles), running=True)
+
+    t = threading.Thread(target=spotify_download_worker, args=(titles, output_subdir), daemon=True)
+    t.start()
+
+    return jsonify({"message": "Playlist download started", "total": len(titles)}), 200
+
+
+def spotify_download_worker(titles, output_subdir):
+    # --- Search each title on YouTube, take the topmost result and add it to the download queue
+    for i, title in enumerate(titles):
+        try:
+            search_results = yt.search(title, filter="songs")
+            top_result = search_results[0] if search_results else None
+
+            if top_result and top_result.get("videoId"):
+                url = f"https://music.youtube.com/watch?v={top_result['videoId']}"
+
+                with yt_dl_lock:
+                    songs_list = generateSongList([url])
+
+                for item in songs_list:
+                    item["skip_album_check"] = True
+                    item["output_subdir"] = output_subdir
+                    song_list_queue.put(item)
+            else:
+                console.warning(f'Spotify playlist download: no result found for "{title}"')
+
+        except Exception:
+            console.error(f'Spotify playlist download: failed processing "{title}"')
+            traceback.print_exc()
+
+        with spotify_progress_lock:
+            spotify_dl_progress["current"] = i + 1
+
+    with spotify_progress_lock:
+        spotify_dl_progress["running"] = False
+
+
+@app.route("/spotify-download-progress")
+def spotify_download_progress():
+    with spotify_progress_lock:
+        return jsonify(dict(spotify_dl_progress)), 200
 
 # === Setlist ===
 @app.route("/setlist-artist", methods=["POST"])

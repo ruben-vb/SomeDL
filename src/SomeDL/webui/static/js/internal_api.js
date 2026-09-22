@@ -324,6 +324,52 @@ async function yt_get_artist_req(artist_id) {
 }
 
 
+// === Spotify ===
+async function spotify_search_req(playlist_url) {
+    console.log("--- Requesting spotify search")
+    loader.start();
+    var response = await fetch("/spotify-search", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({"playlist_url": playlist_url})
+    });
+
+    if (!response.ok) {
+        console.error("Search failed with status:", response.status);
+        loader.stop("Error: Spotify search failed with status: " + response.status);
+        return null; // is handled in spotify.js
+    }
+    loader.stop();
+    const data = await response.json()
+    return data
+}
+
+async function spotify_download_playlist_req(titles, playlist_title) {
+    console.log("--- Requesting spotify playlist download")
+    loader.start();
+    var response = await fetch("/spotify-download-playlist", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({"titles": titles, "playlist_title": playlist_title})
+    });
+
+    if (!response.ok) {
+        console.error("Starting playlist download failed with status:", response.status);
+        loader.stop("Error: Starting playlist download failed with status: " + response.status);
+        return null;
+    }
+    loader.stop();
+    const data = await response.json()
+    return data
+}
+
+async function spotify_progress_req() {
+    const res = await fetch("/spotify-download-progress");
+    const data = await res.json();
+    return data;
+}
+
+
 // === Setlist ===
 async function setlist_artist_req(search_query) {
     console.log("--- Requesting setlist artist search")

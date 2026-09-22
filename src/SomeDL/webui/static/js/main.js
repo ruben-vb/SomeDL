@@ -38,6 +38,15 @@ window.onload = async function () {
         document.querySelector(".version").innerHTML = "v" + version.v;
     }
 
+    // --- Restore spotify playlist progress bar if a playlist download is still running (e.g. after a page reload)
+    const spotify_progress = await spotify_progress_req();
+    if (spotify_progress && spotify_progress.running) {
+        spotify_progress_active = true;
+        document.getElementById("spotify-progress-wrapper").style.display = "block";
+        spotify_update_progress(spotify_progress.current, spotify_progress.total);
+        spotify_update_progress_loop();
+    }
+
 }
 
 
@@ -50,6 +59,7 @@ Coloris({
 
 // === UI Navigation ===
 function load_page(page) {
+    var previous_page = active_page;
     active_page = page;
     console.log("Loading page: " + page)
     
@@ -73,6 +83,11 @@ function load_page(page) {
     if (page == "download") {
         // --- Set dl_status_active to true to fetch updates for the download field. Will turn false after that if the queue is empty.
         dl_status_active = true;
+
+        // --- Sync the download field with the server queue (items added by background processes won't be in the DOM otherwise)
+        if (previous_page && previous_page != "download") {
+            refresh_queue_items();
+        }
     } else if (page == "download-history") {
         refresh_history();
     }

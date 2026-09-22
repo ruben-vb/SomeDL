@@ -3,6 +3,7 @@ dist/
 
 *.egg-info/
 *.egg
+.idea
 
 downloads/
 
