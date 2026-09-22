@@ -109,25 +109,38 @@ def downloadSong(videoID: str, artist: str, album_artist: str, song: str, album,
 
     if config["download"]["cookies_path"]:
         ydl_opts["cookiefile"] = config["download"]["cookies_path"]
-    try: 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            # info = ydl.extract_info(URLS, download=False)  # get metadata only
-            # ydl.list_formats(info)  # equivalent to `yt-dlp -F`
-            error_code = ydl.download(URLS)
-            console.debug(f'yt-dlp download successfull. File safed at: {final_filename.get("name")}', label)
-        return final_filename.get("name")
+    max_retries = 5
+    base_delay = 2
 
-    except DownloadError as e:
-        console.error(f"yt-dlp download failed.", label)
-        console.error(f"Do you have ffmpeg installed? Is the song {URLS} age restricted?", label)
-        console.error(f"Perhaps there was a network error, you can try again.", label)
-        console.error(f"Error:", label)
-        console.error(e, label)
-        return False
-    except Exception as e:
-        console.error(f"Unexpected yt-dlp error: {e}", label)
-        return False
-    
+    for attempt in range(max_retries + 1):
+        final_filename.clear()
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                # info = ydl.extract_info(URLS, download=False)  # get metadata only
+                # ydl.list_formats(info) # equivalent to `yt-dlp -F`
+                error_code = ydl.download(URLS)
+                console.debug(f'yt-dlp download successfull. File safed at: {final_filename.get("name")}', label)
+            return final_filename.get("name")
+
+        except DownloadError as e:
+            if attempt < max_retries:
+                delay = base_delay * (2 ** attempt)
+                console.warning(f"yt-dlp download failed (attempt {attempt + 1}/{max_retries + 1}), retrying in {delay}s", label)
+                console.debug(f"Error:", label)
+                console.debug(e, label)
+                time.sleep(delay)
+                continue
+
+            console.error(f"yt-dlp download failed after {max_retries + 1} attempts.", label)
+            console.error(f"Do you have ffmpeg installed? Is the song {URLS} age restricted?", label)
+            console.error(f"Perhaps there was a network error, you can try again.", label)
+            console.error(f"Error:", label)
+            console.error(e, label)
+            return False
+        except Exception as e:
+            console.error(f"Unexpected yt-dlp error: {e}", label)
+            return False
+
 #downloadSong("A8Mz0Kh7pyw", "Alexandra Căpitănescu", "Choke Me", "Choke Me", 2026, 1, 1)
 #downloadSong("ws4aH2iz3j8", "Alexandra Căpitănescu", "Choke Me", "Choke Me", 2026, 1, 1)
 
