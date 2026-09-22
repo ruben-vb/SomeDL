@@ -438,7 +438,7 @@ def spotify_search():
     tracks: list[str] = []
 
     with SpotifyClient() as client:
-        playlist = client.get_playlist(playlist_url)
+        playlist = client.get_playlist(playlist_url, max_tracks=None)
 
         for playlistTrack in playlist.tracks:
             track = playlistTrack.track
