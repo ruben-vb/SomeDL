@@ -443,7 +443,7 @@ def spotify_search():
         for playlistTrack in playlist.tracks:
             track = playlistTrack.track
 
-            query = f"{track.artists[0].name} - {track.name}"
+            query = f"{", ".join(artist.name for artist in track.artists)} - {track.name}"
 
             tracks.append(query)
 
