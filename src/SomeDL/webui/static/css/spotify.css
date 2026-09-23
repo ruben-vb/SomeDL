@@ -17,6 +17,12 @@
     margin-top: 0.5rem;
 }
 
+.spotify-song-count {
+    font-size: 0.9rem;
+    color: var(--color-text-muted, inherit);
+    white-space: nowrap;
+}
+
 .spotify-tracklist {
     width: 100%;
     min-height: 25rem;

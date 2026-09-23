@@ -337,9 +337,10 @@
 
 <div class="spotify-playlist-title" id="spotify-playlist-title" style="display: none;"></div>
 
-                    <textarea class="spotify-tracklist" id="spotify-tracklist" spellcheck="false" placeholder="Search a spotify playlist to load its tracks here"></textarea>
+                    <textarea class="spotify-tracklist" id="spotify-tracklist" oninput="spotify_update_song_count()" spellcheck="false" placeholder="Search a spotify playlist to load its tracks here"></textarea>
 
                     <div class="spotify-button-row">
+                        <div class="spotify-song-count" id="spotify-song-count" style="display: none;"></div>
                         <div class="flex-expander"></div>
                         <button class="ui-button ui-button-small" onclick="spotify_copy_tracklist()" title="Copy all tracks to clipboard">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-copy"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" /><path d="M4.012 16.737a2 2 0 0 1 -1.012 -1.737v-10a2 2 0 0 1 2 -2h10a2 2 0 0 1 1.738 1.012" /></svg>

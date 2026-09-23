@@ -3,6 +3,18 @@
 var spotify_progress_active = false;
 var spotify_playlist_title = "";
 
+function spotify_update_song_count() {
+    const titles = document.getElementById("spotify-tracklist").value.split("\n").map(s => s.trim()).filter(s => s.length > 0);
+    const song_count_el = document.getElementById("spotify-song-count");
+
+    if (titles.length > 0) {
+        song_count_el.textContent = titles.length + " Songs";
+        song_count_el.style.display = "block";
+    } else {
+        song_count_el.style.display = "none";
+    }
+}
+
 async function spotify_search() {
     const playlist_url = document.getElementById("inp-spotify-search").value.trim();
 
@@ -18,6 +30,9 @@ async function spotify_search() {
     }
 
     document.getElementById("spotify-tracklist").value = res.tracks.join("\n");
+
+    // --- Display the number of songs found
+    spotify_update_song_count();
 
     // --- Display the playlist title
     const playlist_title_el = document.getElementById("spotify-playlist-title");
